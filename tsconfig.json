@@ -10,10 +10,6 @@
     "outDir": "./lib/",
     "strict": true,
     "moduleResolution": "node",
-    "lib": [
-      "DOM",
-      "ESNext"
-    ],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
