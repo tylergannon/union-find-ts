@@ -1,12 +1,11 @@
 {
   "name": "union-find-ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An immutable Union-Find structure.",
   "main": "./lib/src/index.js",
   "files": [
     "lib/**/*"
   ],
-  "type": "module",
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf ./lib/",
