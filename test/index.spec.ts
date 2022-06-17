@@ -1,4 +1,4 @@
-import { findPath, find, link, linkAll, toConnectedGroups, unionFind } from '../src'
+import { findPath, find, link, linkAll, toConnectedGroups, unionFind, UnionFind } from '../src'
 import { concat, flatten, groupBy, lift, map } from 'ramda'
 import { Maybe } from 'purify-ts'
 
@@ -104,7 +104,6 @@ describe('Union-Find', () => {
                 uf = link(uf, 1, 6)
                 expect(_find(2)).toBe(_find(7))
                 uf = linkAll(uf, 11, [12, 13, 14, 15, 16, 17, 18, 19, 20])
-                console.log(uf.roots.slice(1, 21))
             })
         })
     })
@@ -145,7 +144,6 @@ describe('Union-Find', () => {
                           )
             )
             const groups = toConnectedGroups(uf)
-            // console.log(groups)
             expect(groups.length).toBe(2)
             const findItemArray = lift(findItemByNum)
 
@@ -155,7 +153,6 @@ describe('Union-Find', () => {
 
             const solution = findPath(uf, candidates, groups[1][0], groups[0][0])
             const result = [[allItems.find(it => it.num === 62)]]
-            console.log(`Expect: ${String(result)}\nActual: ${String(solution)}\n`)
             expect(solution.isJust()).toBeTruthy()
             expect(solution.extract()).toEqual(result)
         })
@@ -185,17 +182,18 @@ describe('Union-Find', () => {
                           )
             )
             const groups = toConnectedGroups(uf)
-            console.log(groups)
-            // console.log(groups)
             expect(groups.length).toBe(5)
             const findItemArray = lift(findItemByNum)
 
-            function candidates(item: TestInterface): TestInterface[] {
+            function candidates(item: TestInterface, uf: UnionFind<TestInterface>): TestInterface[] {
                 return concat(findItemArray(item.connected), gatesByCenter[`${item.center}`])
             }
 
             const solution = findPath(uf, candidates, findItemByNum(42), findItemByNum(56))
-            console.log(solution)
+            expect(solution.isJust()).toBeTruthy()
+            if (solution.isJust()) {
+                expect(solution.extract()[0].length).toBe(2)
+            }
         })
     })
 })

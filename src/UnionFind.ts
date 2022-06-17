@@ -1,5 +1,4 @@
-import { repeat, tail, prepend, groupBy, values, concat, clone, any } from 'ramda'
-import { Maybe, Just, Nothing } from 'purify-ts/Maybe'
+import { repeat, tail, prepend, groupBy, values, clone } from 'ramda'
 
 /**
  * A Union-Find data structure.
