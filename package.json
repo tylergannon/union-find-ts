@@ -1,7 +1,7 @@
 {
-  "name": "typescript-npm-package-template",
+  "name": "union-find-ts",
   "version": "1.0.0",
-  "description": "A template for creating npm packages using TypeScript and VSCode",
+  "description": "An immutable Union-Find structure.",
   "main": "./lib/src/index.js",
   "files": [
     "lib/**/*"
@@ -21,32 +21,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ryansonshine/typescript-npm-package-template.git"
+    "url": "git+https://github.com/tylergannon/union-find-ts.git"
   },
   "license": "MIT",
   "author": {
-    "name": "Ryan Sonshine",
-    "email": "ryansonshine@users.noreply.github.com",
-    "url": "https://github.com/ryansonshine"
+    "name": "Tyler Gannon",
+    "email": "tylergannon@users.noreply.github.com",
+    "url": "https://github.com/tylergannon"
   },
   "engines": {
     "node": ">=12.0"
   },
-  "keywords": [
-    "boilerplate",
-    "template",
-    "typescript",
-    "vscode",
-    "jest",
-    "husky",
-    "commitizen",
-    "semantic-release",
-    "codecov"
-  ],
+  "keywords": ["typescript", "union-find" ],
   "bugs": {
-    "url": "https://github.com/ryansonshine/typescript-npm-package-template/issues"
+    "url": "https://github.com/tylergannon/union-find-ts/issues"
   },
-  "homepage": "https://github.com/ryansonshine/typescript-npm-package-template#readme",
+  "homepage": "https://github.com/tylergannon/union-find-ts#readme",
   "devDependencies": {
     "@ryansonshine/commitizen": "^4.2.8",
     "@ryansonshine/cz-conventional-changelog": "^3.3.4",
