@@ -109,7 +109,7 @@ export function unionFind<T = unknown, U extends T[] | number = number, V = U ex
     const items: V[] = (
         typeof itemsOrSize === 'number'
             ? sequenceArray(itemsOrSize)
-            : prepend(null as V, itemsOrSize as unknown as V[])
+            : prepend(null as unknown as V, itemsOrSize as unknown as V[])
     ) as V[]
 
     const uf1: UnionFind<V> = {

@@ -64,8 +64,8 @@ describe('Union-Find', () => {
             uf = mappings.reduce((uf1, [left, right]) => link(uf1, left, right), uf)
             const [head, ...tail] = map(it => find(uf, it), flatten(mappings))
 
-            tail.forEach(() => {
-                expect(head).toBeJust
+            tail.forEach(it => {
+                expect(head).toBe(it)
             })
         })
 
