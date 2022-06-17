@@ -15,7 +15,7 @@
     "lint": "eslint ./src/ --fix",
     "prepare": "husky install",
     "semantic-release": "semantic-release",
-    "test:watch": "jest --watch",
+    "test:watch": "jest --watch --notify --notifyMode change",
     "test": "jest --coverage",
     "typecheck": "tsc --noEmit"
   },
@@ -64,6 +64,7 @@
     "husky": "^8.0.1",
     "jest": "^28.1.1",
     "lint-staged": "^13.0.1",
+    "node-notifier": "^10.0.1",
     "prettier": "^2.7.0",
     "semantic-release": "^19.0.2",
     "ts-jest": "^28.0.5",
@@ -124,6 +125,7 @@
     ]
   },
   "dependencies": {
+    "purify-ts": "^1.2.2",
     "ramda": "^0.28.0"
   }
 }

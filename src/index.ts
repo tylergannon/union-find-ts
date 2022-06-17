@@ -1,4 +1,5 @@
-import { repeat, tail, prepend, groupBy, values, concat } from 'ramda'
+import { repeat, tail, prepend, groupBy, values, concat, clone, any } from 'ramda'
+import { Maybe, Just, Nothing } from 'purify-ts/Maybe'
 
 /**
  * A Union-Find data structure.
@@ -25,73 +26,93 @@ export const toGroups = <T>(uf: UnionFind<T>) =>
  */
 export const toConnectedGroups = <T>(uf: UnionFind<T>) => toGroups(uf).filter(lenGtOne)
 
+export const findPath = <T>(uf: UnionFind<T>, candidates: (item: T) => T[], src: T, dest: T): Maybe<T[][]> =>
+    _findPath(uf, candidates, src, dest, [])
+
+type HasGroup = {
+    /**
+     *
+     * @param uf A Component Map
+     * @param num Item number in the component
+     * @returns true if the roots object has a nonzero value for this item.
+     */
+    <T>(uf: UnionFind<T>, num: number): boolean
+    /**
+     *
+     * @param uf A Component Map
+     * @param item Item from the mapped collection
+     * @returns true if the roots object has a nonzero value for this item.
+     */
+    <T>(uf: UnionFind<T>, item: T): boolean
+}
+
 /**
- * Assumes that both arguments each contain lists of the same length.
- * For example, one may have items of length 3 while the other has items of length 1.
- *
- * Returns the list containing shorter items.  If they have the same length, concatenates
- * the lists.
- * @param left One list of lists
- * @param right Another lists of lists
- * @returns The list containing shorter lists, or else the two concatenated.
+ * Determines whether the item has been grouped yet (might be itself)
+ * @param uf A Component Map
+ * @param num Item number in the component
+ * @returns true if the roots object has a nonzero value for this item.
  */
-const shortestLengthLists = <T>(left: T[][], right: T[][]) => {
-    if (left.length === 0) {
-        return right
-    }
-    if (right.length === 0) {
-        return left
-    }
-    if (left[0].length === right[0].length) {
-        return concat(left, right)
-    }
-    if (right[0].length < left[0].length) {
-        return right
-    }
-    return left
+export const hasGroup: HasGroup = <T>(uf: UnionFind<T>, num: number | T): boolean =>
+    uf.roots[typeof num === 'number' ? num : uf.map(num)] !== 0
+
+interface GroupReducer<T> {
+    readonly solutions: Maybe<T[][]>
+    readonly uf: UnionFind<T>
+    readonly seen: T[]
 }
 
-export const connectGroups = <T>(
-    uf: UnionFind<T>,
-    candidates: (item: T) => T[],
-    group1: T[],
-    group2: T[]
-): T[][] => {
-    return group1
-        .map(g1 => _connectGroups(uf, candidates, g1, group2[0], [], group1))
-        .reduce(shortestLengthLists)
+const joinSolutions = <T>(left: T[][], right: T[][]) => {
+    const comp = left[0].length - right[0].length
+    return comp === 0 ? concat(left, right) : comp < 0 ? left : right
 }
 
 /**
+ * Okay let's try something different.
+ * Enter the function.
+ *
+ * * Link the item to all viable neighbors that aren't seen. (Seen ones are already in the same component.)
+ * *
+ *
  *
  * @param uf
  * @param candidates Candidates function
- * @param param2
+ * @param item
  * @param group2
  * @param path
  * @param seen
  * @returns
  */
-const _connectGroups = <T>(
+const _findPath = <T>(
     uf: UnionFind<T>,
     candidates: (item: T) => T[],
     item: T,
     group2: T,
-    path: T[],
     seen: T[]
-): T[][] => {
-    if (item in seen) {
-        return []
+): Maybe<T[][]> => {
+    const haveNotSeen = (item: T) => !seen.includes(item)
+    const adjacent = candidates(item)
+    const destGroup = findItem(uf, group2)
+
+    if (any(it => findItem(uf, it) === destGroup, adjacent.filter(haveNotSeen))) {
+        return Just([[]])
     }
-    if (findItem(uf, item) == findItem(uf, group2)) {
-        return [path]
-    }
-    const newPath = uf.ranks[uf.map(item)] === 0 ? [item, ...path] : path
-    const connected = candidates(item).filter(it => !(it in seen))
-    const newSeen = concat(seen, connected)
-    return connected
-        .map(next => _connectGroups(linkItem(uf, next, item), candidates, next, group2, newPath, newSeen))
-        .reduce(shortestLengthLists)
+
+    return adjacent.filter(haveNotSeen).reduce(
+        ({ uf: accUf, solutions, seen }, candidate) => {
+            seen = prepend(candidate, seen)
+            return {
+                seen,
+                uf: accUf,
+                solutions: _findPath(accUf, candidates, candidate, group2, seen)
+                    .map(it => (hasGroup(uf, candidate) ? it : it.map(path => prepend(candidate, path))))
+                    .reduce(
+                        (previous, currentValue) => Just(previous.reduce(joinSolutions, currentValue)),
+                        solutions
+                    )
+            }
+        },
+        { uf, solutions: Nothing, seen } as GroupReducer<T>
+    ).solutions
 }
 
 /**
@@ -107,7 +128,23 @@ const sequenceArray = (topNumber: number) => [...Array(topNumber + 1).keys()]
  * @returns An array of length [topIndex + 1], full of zeroes.
  */
 const zeroesArray = (topIndex: number) => repeat(0, topIndex + 1)
-
+type Linker<V> = { (args: { idx: number; item: V }): number[] }
+/**
+ * Create a UnionFind structure for the given items.
+ * Optional linker and linkItem functions can allow the components to be fully resolved during object construction.
+ * @param size the number of items in the graph
+ * @param map Key function mapping item to a unique key
+ * @param linker optional function that identifies a list of item keys that should be linked to the item number.
+ */
+export function unionFind(size: number, map: (val: number) => number, links: number[][]): UnionFind<number>
+/**
+ * Create a UnionFind structure for the given items.
+ * Optional linker and linkItem functions can allow the components to be fully resolved during object construction.
+ * @param items The list of items in the forest
+ * @param map Key function mapping item to a unique key
+ * @param linker optional function that identifies a list of item keys that should be linked to the item number.
+ */
+export function unionFind<T>(items: T[], map: (val: T) => number, links: number[][]): UnionFind<T>
 /**
  * Create a UnionFind structure for the given items.
  * Optional linker and linkItem functions can allow the components to be fully resolved during object construction.
@@ -130,12 +167,12 @@ export function unionFind<T>(
 export function unionFind(
     size: number,
     map: (val: number) => number,
-    linker?: (args: { idx: number; item: number }) => number[]
+    linker?: Linker<number>
 ): UnionFind<number>
 export function unionFind<T = unknown, U extends T[] | number = number, V = U extends number ? number : T>(
     itemsOrSize: U,
     map: (val: V) => number,
-    linker?: (args: { idx: number; item: V }) => number[]
+    linker?: Linker<V> | number[][]
 ): UnionFind<V> {
     const items: V[] = (
         typeof itemsOrSize === 'number'
@@ -152,9 +189,11 @@ export function unionFind<T = unknown, U extends T[] | number = number, V = U ex
 
     return linker
         ? flatten(
-              tail(items).reduce((uf, item, index) => {
-                  return linkAll(uf, map(item), linker({ item, idx: index + 1 }))
-              }, uf1)
+              typeof linker === 'function'
+                  ? tail(items).reduce((uf, item, index) => {
+                        return linkAll(uf, map(item), linker({ item, idx: index + 1 }))
+                    }, uf1)
+                  : linker.reduce((uf, [left, right]) => link(uf, left, right), uf1)
           )
         : uf1
 }
@@ -167,20 +206,6 @@ export function unionFind<T = unknown, U extends T[] | number = number, V = U ex
  * @returns
  */
 const replaceAt = <T>(list: T[], idx: number, val: T) => [...list.slice(0, idx), val, ...list.slice(idx + 1)]
-const replaceTwo = <T>(list: T[], idx1: number, idx2: number, val: T): T[] =>
-    idx1 === idx2
-        ? replaceAt(list, idx1, val)
-        : idx1 > idx2
-        ? replaceTwo(list, idx2, idx1, val)
-        : [...list.slice(0, idx1), val, ...list.slice(idx1 + 1, idx2), val, ...list.slice(idx2 + 1)]
-
-/**
- * Utility function to increment the value at index [idx], within a list of numbers (without mutating the list).
- * @param list
- * @param idx The index at which to increment
- * @returns A copy of [list] with the value at [idx] incremented by one.
- */
-const incrementAt = (list: number[], idx: number) => replaceAt(list, idx, list[idx] + 1)
 
 type Finder = {
     /**
@@ -245,7 +270,10 @@ function defineOne<T>(uf: UnionFind<T>, item: number): UnionFind<T> {
 }
 
 /**
+ * Update the roots for the root of the item in question,
+ * as well as for the items.
  *
+ * Change the rank for the groups, as well.
  * @param uf
  * @param left
  * @param right
@@ -255,28 +283,44 @@ export function link<T>(
     uf: UnionFind<T>,
     left: number,
     right: number,
-    gl: number = find(uf, left),
-    gr: number = find(uf, right),
+    leftComponent: number = find(uf, left),
+    rightComponent: number = find(uf, right),
     { roots, ranks }: UnionFind<T> = uf
 ): UnionFind<T> {
-    if (gl === gr) {
+    if (leftComponent === rightComponent) {
         return uf
     }
+    const newRoots = clone(roots)
+    const newRanks = clone(ranks)
+    // you want to set both components to the lower ranked of the two.  If equal we will choose the right.
+    const rankComparison = ranks[leftComponent] - ranks[rightComponent]
+    const newParent = rankComparison < 0 ? leftComponent : rightComponent
+
+    const setParent = (idx: number) => {
+        newRoots[idx] = newParent
+    }
+
+    ;[left, right, leftComponent, rightComponent].forEach(setParent)
+
+    if (rankComparison === 0) {
+        newRanks[newParent]++
+    }
+
     return {
         ...uf,
-        roots: ranks[gl] < ranks[gr] ? replaceTwo(roots, gr, gl, gl) : replaceTwo(roots, gr, gl, gr),
-        ranks: ranks[gl] === ranks[gr] ? incrementAt(ranks, gr) : ranks
+        roots: newRoots,
+        ranks: newRanks
     }
 }
 
 export const linkItem = <T>(uf: UnionFind<T>, left: T, right: T) => link(uf, uf.map(left), uf.map(right))
 
-export const linkItemAll = <T>(uf: UnionFind<T>, left: T, right: T[]) =>
-    linkAll(
-        uf,
-        uf.map(left),
-        right.map(it => uf.map(it))
-    )
+export const linkItemAll = <T>(uf: UnionFind<T>, left: T, right: T[]) => {
+    return linkAll(uf, uf.map(left), right.map(uf.map))
+}
 
-export const linkAll = <T>(uf: UnionFind<T>, left: number, right: number[]) =>
-    right.length === 0 ? defineOne(uf, left) : right.reduce((uf1, right1) => link(uf1, left, right1), uf)
+export const linkAll = <T>(uf: UnionFind<T>, left: number, right: number[]) => {
+    return right.length === 0
+        ? defineOne(uf, left)
+        : right.reduce((uf1, right1) => link(uf1, left, right1), uf)
+}
