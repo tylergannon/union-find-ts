@@ -4,8 +4,8 @@
     "test/**/*.ts"
   ],
   "compilerOptions": {
-    "target": "ES6",
-    "module": "CommonJS",
+    "target": "ESNext",
+    "module": "ESNext",
     "declaration": true,
     "outDir": "./lib/",
     "strict": true,
