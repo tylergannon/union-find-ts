@@ -64,7 +64,7 @@ const sequenceArray = (topNumber: number) => [...Array(topNumber + 1).keys()]
  * @returns An array of length [topIndex + 1], full of zeroes.
  */
 const zeroesArray = (topIndex: number) => repeat(0, topIndex + 1)
-type Linker<V> = { (args: { idx: number; item: V }): number[] }
+export type Linker<V> = { (args: { idx: number; item: V }): number[] }
 /**
  * Create a UnionFind structure for the given items.
  * Optional linker and linkItem functions can allow the components to be fully resolved during object construction.
