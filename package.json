@@ -1,6 +1,6 @@
 {
   "name": "union-find-ts",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "An immutable Union-Find structure.",
   "main": "./lib/src/index.js",
   "files": [
