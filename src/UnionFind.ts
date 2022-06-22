@@ -64,7 +64,7 @@ const sequenceArray = (topNumber: number) => [...Array(topNumber + 1).keys()]
  * @returns An array of length [topIndex + 1], full of zeroes.
  */
 const zeroesArray = (topIndex: number) => repeat(0, topIndex + 1)
-export type Linker<V> = { (args: { idx: number; item: V }): number[] }
+export type Linker<V> = { (item: V): V[] }
 /**
  * Create a UnionFind structure for the given items.
  * Optional linker and linkItem functions can allow the components to be fully resolved during object construction.
@@ -78,9 +78,9 @@ export function unionFind(size: number, map: (val: number) => number, links: num
  * Optional linker and linkItem functions can allow the components to be fully resolved during object construction.
  * @param items The list of items in the forest
  * @param map Key function mapping item to a unique key
- * @param linker optional function that identifies a list of item keys that should be linked to the item number.
+ * @param links optional function that identifies a list of item keys that should be linked to the item number.
  */
-export function unionFind<T>(items: T[], map: (val: T) => number, links: number[][]): UnionFind<T>
+export function unionFind<T>(items: T[], map: (val: T) => number, links: T[][]): UnionFind<T>
 /**
  * Create a UnionFind structure for the given items.
  * Optional linker and linkItem functions can allow the components to be fully resolved during object construction.
@@ -104,7 +104,7 @@ export function unionFind(
 export function unionFind<T = unknown, U extends T[] | number = number, V = U extends number ? number : T>(
     itemsOrSize: U,
     map: (val: V) => number,
-    linker?: Linker<V> | number[][]
+    linker?: Linker<V> | V[][]
 ): UnionFind<V> {
     const items: V[] = (
         typeof itemsOrSize === 'number'
@@ -122,10 +122,10 @@ export function unionFind<T = unknown, U extends T[] | number = number, V = U ex
     return linker
         ? flatten(
               typeof linker === 'function'
-                  ? tail(items).reduce((uf, item, index) => {
-                        return linkAll(uf, map(item), linker({ item, idx: index + 1 }))
+                  ? tail(items).reduce((uf, item) => {
+                        return linkItemAll(uf, item, linker(item))
                     }, uf1)
-                  : linker.reduce((uf, [left, right]) => link(uf, left, right), uf1)
+                  : linker.reduce((uf, [left, right]) => linkItem(uf, left, right), uf1)
           )
         : uf1
 }

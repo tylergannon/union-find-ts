@@ -1,4 +1,4 @@
-import { findPath, find, link, linkAll, toConnectedGroups, unionFind, UnionFind } from '../src'
+import { findPath, find, link, linkAll, toConnectedGroups, unionFind, UnionFind, linkItem, findItem } from '../src'
 import { concat, flatten, groupBy, lift, map } from 'ramda'
 import { Maybe } from 'purify-ts'
 
@@ -46,7 +46,7 @@ describe('Union-Find', () => {
             expect(uf.items).toHaveLength(65)
         })
 
-        const mappings = [
+        const mappings = () => [
             [40, 37],
             [40, 21],
             [37, 6],
@@ -56,13 +56,14 @@ describe('Union-Find', () => {
             [6, 55],
             [55, 39],
             [59, 34]
-        ]
+        ].map(pair => pair.map(findItemByNum))
 
         it('Should be able to create links', () => {
             let uf = unionFind(allItems, ({ num }) => num)
             expect(uf.items).toHaveLength(65)
-            uf = mappings.reduce((uf1, [left, right]) => link(uf1, left, right), uf)
-            const [head, ...tail] = map(it => find(uf, it), flatten(mappings))
+            uf = mappings().reduce((uf1, [left, right]) => linkItem(uf1, left, right), uf)
+
+            const [head, ...tail] = map(it => findItem(uf, it), flatten(mappings()))
 
             tail.forEach(it => {
                 expect(head).toBe(it)
@@ -73,12 +74,13 @@ describe('Union-Find', () => {
             let uf = unionFind(
                 allItems,
                 ({ num }) => num,
-                ({ item }) => {
-                    return mappings.filter(it => item.num in it).map(([l, r]) => (l === item.num ? r : l))
+                (item) => {
+                    return mappings().filter(it => it.includes(item)).map(([l, r]) => (l === item ? r : l))
                 }
             )
-            uf = mappings.reduce((uf1, [left, right]) => link(uf1, left, right), uf)
-            const [head, ...tail] = map(it => find(uf, it), flatten(mappings))
+            uf = mappings().reduce((uf1, [left, right]) => linkItem(uf1, left, right), uf)
+
+            const [head, ...tail] = map(it => findItem(uf, it), flatten(mappings()))
 
             tail.forEach(t => {
                 expect(head).toBe(t)
@@ -95,7 +97,8 @@ describe('Union-Find', () => {
                     [6, 8],
                     [6, 9],
                     [6, 10]
-                ])
+                ].map(pair=>pair.map(findItemByNum)))
+
                 const _find = (item: number) => find(uf, item)
 
                 expect(_find(2)).toBe(_find(5))
@@ -136,11 +139,11 @@ describe('Union-Find', () => {
                  * @param param0
                  * @returns
                  */
-                ({ item: gate }) =>
+                (gate) =>
                     !defined(gate.num)
                         ? []
-                        : [...gate.connected, ...gatesByCenter[gate.center.toString()].map(gateNum)].filter(
-                              defined
+                        : [...gate.connected.map(findItemByNum), ...gatesByCenter[gate.center.toString()]].filter(
+                            it => defined(it.num)
                           )
             )
             const groups = toConnectedGroups(uf)
@@ -174,11 +177,11 @@ describe('Union-Find', () => {
                  * @param param0
                  * @returns
                  */
-                ({ item: gate }) =>
+                (gate) =>
                     !defined(gate.num)
                         ? []
-                        : [...gate.connected, ...gatesByCenter[gate.center.toString()].map(gateNum)].filter(
-                              defined
+                        : [...gate.connected.map(findItemByNum), ...gatesByCenter[gate.center.toString()]].filter(
+                            it => defined(it.num)
                           )
             )
             const groups = toConnectedGroups(uf)
