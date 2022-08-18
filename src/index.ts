@@ -1,2 +1,2 @@
-export * from './UnionFind'
-export * from './findGroup'
+export * from './UnionFind.js'
+export * from './findGroup.js'
