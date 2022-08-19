@@ -2,13 +2,13 @@
   "name": "union-find-ts",
   "version": "1.0.9",
   "description": "An immutable Union-Find structure.",
-  "main": "./lib/src/index.js",
+  "main": "./lib/index.js",
   "files": [
     "lib/**/*"
   ],
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project ./tsconfig.build.json",
     "clean": "rm -rf ./lib/",
     "cm": "cz",
     "coverage": "codecov",

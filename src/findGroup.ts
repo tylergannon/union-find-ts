@@ -1,6 +1,6 @@
 import { Maybe, Just, Nothing } from 'purify-ts'
 import { any, concat, prepend } from 'ramda'
-import { find, findItem, hasGroup, linkItemAll, UnionFind } from './UnionFind'
+import { find, findItem, hasGroup, linkItemAll, UnionFind } from './UnionFind.js'
 
 interface GroupReducer<T> {
     readonly solutions: Maybe<T[][]>
